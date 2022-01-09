@@ -1,0 +1,30 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "ph.mcmod.bow_api.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "MixinAbstractClientPlayerEntity",
+    "MixinAbstractSkeletonEntity",
+    "MixinBowAttackGoal",
+    "MixinBowItem",
+    "MixinEggEntity",
+    "MixinEnderPearlEntity",
+    "MixinFireballEntity",
+    "MixinHeldItemRenderer",
+    "MixinModelPredicateProviderRegistry",
+    "MixinPersistentProjectileEntity",
+    "MixinProjectileEntity",
+    "MixinProjectileUtil",
+    "MixinSkeletonEntityModel",
+    "MixinSmallFireballEntity",
+    "MixinSnowballEntity",
+    "ModelPredicateProviderRegistryAccessor",
+    "PersistentProjectileEntityAccessor"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

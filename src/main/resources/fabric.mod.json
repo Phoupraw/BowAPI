@@ -1,38 +1,36 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "bow_api",
   "version": "${version}",
-
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Bow API",
+  "description": "",
   "authors": [
-    "Me!"
+    "Phoupraw"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://www.mcmod.cn/class/4191.html",
+    "issues": "https://www.mcmod.cn/class/4191.html"
   },
-
   "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
-
+  "icon": "assets/bow_api/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "ph.mcmod.bow_api.Main::init"
+    ],
+    "client": [
+      "ph.mcmod.bow_api.ClientMain::init"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "bow_api.mixins.json"
   ],
-
+  "accessWidener": "accessWidener.txt",
   "depends": {
     "fabricloader": ">=0.11.3",
-    "fabric": "*",
-    "minecraft": "1.18.x",
-    "java": ">=17"
+    "minecraft": ">=1.17"
   },
-  "suggests": {
-    "another-mod": "*"
+  "custom": {
+
   }
 }
