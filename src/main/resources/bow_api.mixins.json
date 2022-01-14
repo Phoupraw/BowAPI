@@ -1,25 +1,25 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "ph.mcmod.bow_api.mixin",
-  "compatibilityLevel": "JAVA_16",
-  "mixins": [
-    "AccessEntityType",
-    "AccessModelPredicateProviderRegistry",
-    "AccessPersistentProjectileEntity",
-    "MixinAbstractClientPlayerEntity",
-    "MixinAbstractSkeletonEntity",
-    "MixinBowAttackGoal",
-    "MixinBowItem",
-    "MixinHeldItemRenderer",
-    "MixinModelPredicateProviderRegistry",
-    "MixinPersistentProjectileEntity",
-    "MixinProjectileUtil",
-    "MixinSkeletonEntityModel"
-  ],
-  "client": [
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+	"required": true,
+	"minVersion": "0.8",
+	"package": "ph.mcmod.bow_api.mixin",
+	"compatibilityLevel": "JAVA_16",
+	"mixins": [
+		"AccessEntityType",
+		"AccessPersistentProjectileEntity",
+		"MixinAbstractSkeletonEntity",
+		"MixinBowAttackGoal",
+		"MixinBowItem",
+		"MixinPersistentProjectileEntity",
+		"MixinProjectileUtil"
+	],
+	"client": [
+		"AccessModelPredicateProviderRegistry",
+		"MixinModelPredicateProviderRegistry",
+		"MixinAbstractClientPlayerEntity",
+		"MixinHeldItemRenderer",
+		"MixinSkeletonEntityModel"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }
