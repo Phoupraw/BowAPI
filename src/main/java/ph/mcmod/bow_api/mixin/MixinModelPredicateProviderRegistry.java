@@ -65,13 +65,5 @@ public static @Nullable ModelPredicateProvider get(Item item, Identifier id) {
 	}
 	return GLOBAL.get(id);
 }
-///**
-// * 让{@link CustomBowItem}的模型参数和{@link Items#BOW}相同：也传递{@code "pulling"}和{@code "pull"}参数。
-// */
-//@ModifyVariable(method = "get", at = @At("HEAD"))
-//private static Item onGet(Item item) {
-//	if (item instanceof BowItem)
-//		return Items.BOW;
-//	return item;
-//}
+
 }

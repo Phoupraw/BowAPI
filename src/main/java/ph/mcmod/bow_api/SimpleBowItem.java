@@ -19,20 +19,15 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.Hand;
-import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
-import ph.mcmod.bow_api.BowSettings.FinallyModify;
-import ph.mcmod.bow_api.Serialization.SBiConsumer;
-import ph.mcmod.bow_api.mixin.PersistentProjectileEntityAccessor;
+import ph.mcmod.bow_api.mixin.AccessPersistentProjectileEntity;
 
-import java.io.Serializable;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 
+@SuppressWarnings("unused")
 public class SimpleBowItem extends BowItem implements RenderedAsBow, CalcPullProgress {
 protected final double damageAddend;
 protected final double damageFactor;
@@ -40,10 +35,7 @@ protected final double pullSpeed;
 protected final double velocityAddend;
 protected final double velocityFactor;
 protected final boolean arrowDiscard;
-//protected final Function<World, Entity> spawnOnHit;
-protected final List<SBiConsumer<Projectile, HitResult>> afterHits = new LinkedList<>();
-protected final List<Projectile.AfterDamage> afterDamages = new LinkedList<>();
-protected final List<FinallyModify> finallyModifies = new LinkedList<>();
+protected final List<ItemStack> neededItems;
 
 public SimpleBowItem(@NotNull BowSettings settings) {
 	super(settings);
@@ -53,10 +45,7 @@ public SimpleBowItem(@NotNull BowSettings settings) {
 	velocityAddend = settings.getVelocityAddend();
 	velocityFactor = settings.getVelocityFactor();
 	arrowDiscard = settings.isArrowDiscard();
-//	spawnOnHit = settings.getSpawnOnHit();
-	afterHits.addAll(settings.getAfterHits());
-	afterDamages.addAll(settings.getAfterDamages());
-	finallyModifies.addAll(settings.getFinallyModifies());
+	neededItems= settings.getNeededItems();
 }
 
 @Override
@@ -70,40 +59,41 @@ public void onStoppedUsing(@NotNull ItemStack bowStack, @NotNull World world, @N
 	double pullProgress = calcPullProgress(world, user, bowStack, arrowStack, usingTicks);
 	if (Double.isNaN(pullProgress))
 		return;
-	var arrowEntity = calcArrowEntity(world, user, bowStack, arrowStack, pullProgress);
-	arrowEntity.setOwner(user);
-	arrowEntity.setPosition(user.getEyePos().add(0, -0.1, 0));
-	arrowEntity.setVelocity(user, user.getPitch(), user.getYaw(), 0.0F, (float) (pullProgress * 3), 1);
-	arrowEntity.setDamage(arrowEntity.getDamage() + getDamageAddend());
-	arrowEntity.setVelocity(arrowEntity.getVelocity().add(arrowEntity.getVelocity().normalize().multiply(pullProgress * getVelocityAddend())));
-	((ProgressPulled)arrowEntity).setPullProgress(pullProgress);
+	var projectileEntity = calcProjectileEntity(world, user, bowStack, arrowStack, pullProgress);
+	projectileEntity.setOwner(user);
+	projectileEntity.setPosition(user.getEyePos().add(0, -0.1, 0));
+	projectileEntity.setVelocity(user, user.getPitch(), user.getYaw(), 0.0F, (float) (pullProgress * 3), 1);
+	projectileEntity.setDamage(projectileEntity.getDamage() + getDamageAddend());
+	projectileEntity.setVelocity(projectileEntity.getVelocity().add(projectileEntity.getVelocity().normalize().multiply(pullProgress * getVelocityAddend())));
+	((ProgressPulled)projectileEntity).setPullProgress(pullProgress);
 	if (pullProgress >= 1)
-		arrowEntity.setCritical(true);
-	int power = EnchantmentHelper.getLevel(Enchantments.POWER, bowStack);
+		projectileEntity.setCritical(true);
+	int power = getPower(world,user,bowStack,arrowStack,pullProgress,projectileEntity);
 	if (power > 0)
-		arrowEntity.setDamage(arrowEntity.getDamage() + power * 0.5 + 0.5);
+		projectileEntity.setDamage(calcDamage(world,user,bowStack,arrowStack,pullProgress,projectileEntity,power));
 	int punch = EnchantmentHelper.getLevel(Enchantments.PUNCH, bowStack);
 	if (punch > 0)
-		arrowEntity.setPunch(punch);
+		projectileEntity.setPunch(punch);
 	int flame = EnchantmentHelper.getLevel(Enchantments.FLAME, bowStack);
 	if (flame > 0)
-		arrowEntity.setOnFireFor(100 * flame);
+		projectileEntity.setOnFireFor(100 * flame);
 	bowStack.damage(1, user, living -> living.sendToolBreakStatus(user.getActiveHand()));
 	if (user instanceof PlayerEntity player) {
 		player.incrementStat(Stats.USED.getOrCreateStat(this));
 		if (calcInfinity(world, player, bowStack, arrowStack, pullProgress) > world.random.nextDouble())
-			arrowEntity.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
+			projectileEntity.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
 		else
 			arrowStack.decrement(1);
 	} else {
-		arrowEntity.pickupType = PersistentProjectileEntity.PickupPermission.DISALLOWED;
+		projectileEntity.pickupType = PersistentProjectileEntity.PickupPermission.DISALLOWED;
 	}
-	arrowEntity.setDamage(arrowEntity.getDamage() * getDamageFactor());
-	arrowEntity.setVelocity(arrowEntity.getVelocity().multiply(getVelocityFactor()));
+	projectileEntity.setDamage(projectileEntity.getDamage() * getDamageFactor());
+	projectileEntity.setVelocity(projectileEntity.getVelocity().multiply(getVelocityFactor()));
 	if (isArrowDiscard())
-		((PersistentProjectileEntityAccessor) arrowEntity).setLife(1200);
-	world.spawnEntity(finallyModify(world, user, bowStack, arrowStack, pullProgress, arrowEntity));
-	playSoundOnShoot(world, user, bowStack, arrowStack, arrowEntity, pullProgress);
+		((AccessPersistentProjectileEntity) projectileEntity).setLife(1200);
+	world.spawnEntity(finallyModify(world, user, bowStack, arrowStack, pullProgress, projectileEntity));
+	playSoundOnShoot(world, user, bowStack, arrowStack, projectileEntity, pullProgress);
+//	System.out.println(projectileEntity.getVelocity().length());
 }
 
 /**
@@ -148,9 +138,9 @@ public boolean isArrowDiscard() {
 	return arrowDiscard;
 }
 
-//public Function<World, Entity> getSpawnOnHit() {
-//	return spawnOnHit;
-//}
+public List<ItemStack> getNeededItems() {
+	return neededItems;
+}
 
 /**
  * 计算拉弓进度
@@ -226,29 +216,13 @@ public ItemStack calcArrowStack(ItemStack bowStack, World world, LivingEntity us
  * @return 要生成的箭实体
  */
 @SuppressWarnings("unused")
-public PersistentProjectileEntity calcArrowEntity(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress) {
+public PersistentProjectileEntity calcProjectileEntity(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress) {
 	ArrowItem arrowItem = arrowStack.getItem() instanceof ArrowItem a ? a : (ArrowItem) Items.ARROW;
-	PersistentProjectileEntity r = arrowItem.createArrow(world, arrowStack, user);
-	Projectile p = (Projectile) r;
-//	if (getSpawnOnHit() != null) {
-//		p.addAfterHit((projectile, hitResult) -> {
-//			var a = (PersistentProjectileEntity)projectile;
-//			var e = getSpawnOnHit().apply(a.world);
-//			e.setPosition(a.getPos().add(hitResult.getPos()).multiply(0.5));
-//			a.world.spawnEntity(e);
-//			a.discard();
-//		});
-//	}
-	afterHits.forEach(p::addAfterHit);
-	afterDamages.forEach(p::addAfterDamage);
-	return r;
+	return arrowItem.createArrow(world, arrowStack, user);
 }
 
 public Entity finallyModify(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, PersistentProjectileEntity projectile) {
-	Entity r = projectile;
-	for (FinallyModify callback : finallyModifies)
-		r = callback.finallyModify(world, user, bowStack, arrowStack, pullProgress, projectile);
-	return r;
+	return projectile;
 }
 
 /**
@@ -276,5 +250,23 @@ public void playSoundOnShoot(World world, LivingEntity user, ItemStack bowStack,
 @Override
 public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
 	super.usageTick(world, user, stack, remainingUseTicks);
+}
+public int getPower(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, PersistentProjectileEntity projectileEntity) {
+	return EnchantmentHelper.getLevel(Enchantments.POWER, bowStack);
+}
+public double calcDamage(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, PersistentProjectileEntity projectileEntity,int power) {
+	return projectileEntity.getDamage() + power * 0.5 + 0.5;
+}
+
+@Override
+public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+	ItemStack handStack = player.getStackInHand(hand);
+	boolean arrowEmpty = getNeededItems().isEmpty()? player.getArrowType(handStack).isEmpty(): getNeededItems().stream().allMatch(player.getInventory()::contains);
+	if (!player.isCreative() && arrowEmpty) {
+		return TypedActionResult.fail(handStack);
+	} else {
+		player.setCurrentHand(hand);
+		return TypedActionResult.consume(handStack);
+	}
 }
 }

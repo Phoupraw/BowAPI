@@ -34,6 +34,7 @@ public boolean isHoldingBow() {
 private ItemStack bowStack;
 private ItemStack arrowStack;
 
+@SuppressWarnings("InvalidInjectorMethodSignature")
 @ModifyVariable(method = "tick", index = 6, at = @At(value = "STORE", ordinal = 0))
 private int onI(int i) {
 	bowStack = actor.getActiveItem();

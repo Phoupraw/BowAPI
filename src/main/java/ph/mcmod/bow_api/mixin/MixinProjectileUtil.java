@@ -22,6 +22,4 @@ private static void on(LivingEntity entity, Item item, CallbackInfoReturnable<Ha
 	if (item == Items.BOW && entity instanceof AbstractSkeletonEntity)
 		cir.setReturnValue(entity.getMainHandStack().getItem() instanceof BowItem ? Hand.MAIN_HAND : Hand.OFF_HAND);
 }
-
-
 }

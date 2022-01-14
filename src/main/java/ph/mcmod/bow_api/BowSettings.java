@@ -4,71 +4,40 @@ import net.fabricmc.fabric.api.item.v1.CustomDamageHandler;
 import net.fabricmc.fabric.api.item.v1.EquipmentSlotProvider;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.item.FoodComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.Rarity;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.explosion.Explosion;
 import org.jetbrains.annotations.NotNull;
-import ph.mcmod.bow_api.Serialization.SBiConsumer;
 
-import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /**
  * 用于设置弓箭的简单属性
  *
  * @see SimpleBowItem#SimpleBowItem(BowSettings)
  */
+@SuppressWarnings("unused")
 public class BowSettings extends FabricItemSettings {
 
 public interface FinallyModify extends Serializable {
 	Entity finallyModify(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, Entity projectile);
 }
 
-public static Projectile.AfterDamage explodeAfterDamage(float power, boolean createFire, Explosion.DestructionType destructionType) {
-	return (host, entityHitResult, damage, damageSource) -> {
-		var pos = host.getPos().add(entityHitResult.getPos()).multiply(0.5);
-		var world = host.getWorld();
-		float power1 = (float) (power * host.getVelocity().length());
-		world.createExplosion((host.getOwner() instanceof Entity owner) ? owner : ((host instanceof Entity entity) ? entity : null), pos.x, pos.y, pos.z, power1, createFire, destructionType);
-	};
-}
-
-public static FinallyModify changeEntity(EntityType<?> entityType) {
-	String typeId = Registry.ENTITY_TYPE.getId(entityType).toString();
-	return (world, user, bowStack, arrowStack, pullProgress, projectile) -> {
-		EntityType<?> type = Registry.ENTITY_TYPE.get(new Identifier(typeId));
-		@NotNull var r = Objects.requireNonNull(type.create(world));
-		r.readNbt(projectile.writeNbt(new NbtCompound()));
-		r.resetPosition();
-		return r;
-	};
-}
-
-private double damageAddend = 2;
+private double damageAddend = 0;
 private double damageFactor = 1;
 private double pullSpeed = 1;
 private double velocityAddend = 0;
 private double velocityFactor = 1;
 private boolean arrowDiscard = false;
-private final List<SBiConsumer<Projectile, HitResult>> afterHits = new LinkedList<>();
-private final List<Projectile.AfterDamage> afterDamages = new LinkedList<>();
-private final List<FinallyModify> finallyModifies = new LinkedList<>();
+protected final List<ItemStack> neededItems = new ArrayList<>();
 
 /**
  * 在最初，把箭的伤害（{@link PersistentProjectileEntity#getDamage()}、{@link PersistentProjectileEntity#setDamage(double)}）加上这个
@@ -130,7 +99,10 @@ public @NotNull BowSettings setArrowDiscard(boolean arrowDiscard) {
 	this.arrowDiscard = arrowDiscard;
 	return this;
 }
-
+public BowSettings addNeededItems(ItemStack... itemStacks) {
+	neededItems.addAll(Arrays.asList(itemStacks));
+	return this;
+}
 //public @NotNull BowSettings setSpawnOnHit(@NotNull EntityType<?> entityType) {
 //	this.spawnOnHit = Objects.requireNonNull(entityType)::create;
 //	return this;
@@ -140,21 +112,6 @@ public @NotNull BowSettings setArrowDiscard(boolean arrowDiscard) {
 //	this.spawnOnHit = Objects.requireNonNull(function);
 //	return this;
 //}
-
-public @NotNull BowSettings addAfterHit(@NotNull SBiConsumer<Projectile, HitResult> callback) {
-	afterHits.add(Objects.requireNonNull(callback));
-	return this;
-}
-
-public @NotNull BowSettings addAfterDamage(@NotNull Projectile.AfterDamage callback) {
-	afterDamages.add(Objects.requireNonNull(callback));
-	return this;
-}
-
-public @NotNull BowSettings addFinallyModify(@NotNull FinallyModify callback) {
-	finallyModifies.add(Objects.requireNonNull(callback));
-	return this;
-}
 
 public double getDamageAddend() {
 	return damageAddend;
@@ -180,20 +137,8 @@ public boolean isArrowDiscard() {
 	return arrowDiscard;
 }
 
-public @NotNull List<SBiConsumer<Projectile, HitResult>> getAfterHits() {
-	return afterHits;
-}
-
-public @NotNull List<Projectile.AfterDamage> getAfterDamages() {
-	return afterDamages;
-}
-
-protected @NotNull List<FinallyModify> getFinallyModifies() {
-	return finallyModifies;
-}
-
-public BowSettings() {
-	super();
+public List<ItemStack> getNeededItems() {
+	return neededItems;
 }
 
 @Override
