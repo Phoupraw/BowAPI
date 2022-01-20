@@ -25,6 +25,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * 提供了大量简单自定义属性与方法。
+ */
 public class SimpleBowItem extends BowItem implements RenderedAsBow, UsedAsBow {
 protected final double damageAddend;
 protected final double damageFactor;

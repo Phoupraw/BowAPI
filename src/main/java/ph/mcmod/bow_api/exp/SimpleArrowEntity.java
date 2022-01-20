@@ -37,7 +37,7 @@ public SimpleArrowEntity(EntityType<? extends SimpleArrowEntity> entityType, Wor
 
 @Override
 public void afterDamage(EntityHitResult entityHitResult, double damage, DamageSource damageSource) {
-//	System.out.println("entityHitResult = " + entityHitResult + ", damage = " + damage + ", damageSource = " + damageSource);//TODO
+//	System.out.println("entityHitResult = " + entityHitResult + ", damage = " + damage + ", damageSource = " + damageSource);
 //	if (entityHitResult.getEntity() instanceof PlayerEntity player) {
 //player.damage()
 //	}

@@ -13,6 +13,10 @@ import ph.mcmod.bow_api.mixin.AccessEntityType;
 
 import java.util.Objects;
 
+/**
+ * 更方便地创建实体类型。可以完全替代{@link FabricEntityType}与{@link EntityType}。<br>
+ * 请用{@link #builder(EntityFactory)}来创建实例。
+ */
 public class SimpleEntityType<T extends Entity> extends FabricEntityType<T> {
 public static class Builder<T extends Entity> {
 	private final EntityFactory<T> factory;

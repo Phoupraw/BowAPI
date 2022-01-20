@@ -6,9 +6,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 /**
- * 自定义弓的拉弓进度，用于在{@link SimpleBowItem}计算射出的箭的速度。<br>
+ * 自定义弓的实际拉弓进度。<br>
  * 原版{@link BowItem}实现了此接口。
- * @implSpec 如果想让自己的弓自定义拉弓进度，就让物品类实现这个接口。
+ * 在{@link SimpleBowItem}中和骷髅射箭时会调用此接口下的方法计算出拉弓进度，其默认实现为调用原版计算拉弓进度的方法。
  */
 public interface UsedAsBow {
 	static double defaultPullProgress(int usingTicks) {
