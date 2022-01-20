@@ -1,0 +1,7 @@
+<root>
+    <item name='net.minecraft.entity.EntityType T create(net.minecraft.world.World)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null-&gt;!null&quot;"/>
+        </annotation>
+    </item>
+</root>

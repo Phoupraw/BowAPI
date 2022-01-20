@@ -69,7 +69,7 @@ private void onRenderFirstPersonItem(AbstractClientPlayerEntity player, float ti
 private float onV(float v) {
 	if (!(bowItem.getItem() instanceof RenderedAsBow renderedAsBow))
 		return v;
-	return (float) renderedAsBow.calcPullProgress( player,bowItem, bowItem.getMaxUseTime() - player.getItemUseTimeLeft());
+	return (float) renderedAsBow.calcPull( player,bowItem, bowItem.getMaxUseTime() - player.getItemUseTimeLeft());
 }
 
 }

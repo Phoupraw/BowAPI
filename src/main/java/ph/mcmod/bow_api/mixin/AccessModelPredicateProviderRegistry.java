@@ -13,5 +13,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Environment(EnvType.CLIENT)
 public interface AccessModelPredicateProviderRegistry {
 @Invoker
- void invokeRegister(Item item, Identifier id, UnclampedModelPredicateProvider provider) ;
+void invokeRegister(Item item, Identifier id, UnclampedModelPredicateProvider provider);
 }

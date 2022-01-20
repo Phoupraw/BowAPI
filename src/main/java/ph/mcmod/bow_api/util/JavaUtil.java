@@ -15,12 +15,12 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
  * @version 0.8.0
  */
-@SuppressWarnings("unused")
 public final class JavaUtil {
 /**
  * @see #skip(Iterator, Predicate)
@@ -374,6 +374,25 @@ public static boolean equal(Object o1, Object o2, Class<?> cls) {
 		}
 	}
 	return cls.getSuperclass() == null || equal(o1, o2, cls.getSuperclass());
+}
+
+public static <T> Stream<List<T>> pairs(Stream<T> stream) {
+	var source = stream.sequential().spliterator();
+	var target = Spliterators.spliterator(new Iterator<List<T>>() {
+		final Iterator<T> iterator = Spliterators.iterator(source);
+		T last = iterator.next();
+
+		@Override
+		public boolean hasNext() {
+			return iterator.hasNext();
+		}
+
+		@Override
+		public List<T> next() {
+			return List.of(last, last = iterator.next());
+		}
+	}, source.estimateSize() - 1, source.characteristics());
+	return StreamSupport.stream(target, false);
 }
 
 private JavaUtil() {

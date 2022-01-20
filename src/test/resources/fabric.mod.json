@@ -1,29 +1,24 @@
 {
 	"schemaVersion": 1,
-	"id": "bow_api",
+	"id": "bow_api_test",
 	"version": "${version}",
-	"name": "Bow API",
-	"description": "",
+	"name": "Bow API Test",
+	"description": "test",
 	"authors": [
 		"Phoupraw"
 	],
-	"contact": {
-		"homepage": "https://www.mcmod.cn/class/4191.html",
-		"issues": "https://www.mcmod.cn/class/4191.html"
-	},
 	"license": "CC0-1.0",
-	"icon": "assets/bow_api/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-
+			"ph.mcmod.bow_api_test.Main::init"
 		],
 		"client": [
-			"ph.mcmod.bow_api.ClientMain::init"
+			"ph.mcmod.bow_api_test.ClientMain::init"
 		]
 	},
 	"mixins": [
-		"bow_api.mixins.json"
+
 	],
 	"depends": {
 		"fabricloader": ">=0.11.3",

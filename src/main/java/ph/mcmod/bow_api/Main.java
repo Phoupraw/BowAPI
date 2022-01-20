@@ -18,13 +18,12 @@ public static final String NAMESPACE = "bow_api";
 public static final Logger LOGGER = LogManager.getLogger(NAMESPACE);
 
 public static void init() {
-//	Test.init();
 
 }
 
 public static <T extends ArrowEntity> SimpleEntityType<T> register(Identifier id, EntityType.EntityFactory<T> constructor) {
 	var type = Registry.register(Registry.ENTITY_TYPE, id, SimpleEntityType.builder(constructor).copyFrom(EntityType.ARROW).build());
-	EntityRendererRegistry.register(type, ArrowsEntityRenderer::new);
+	EntityRendererRegistry.register(type, EArrowEntityRenderer::new);
 	return type;
 }
 

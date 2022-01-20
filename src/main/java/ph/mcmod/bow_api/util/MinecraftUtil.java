@@ -15,6 +15,7 @@ import net.minecraft.entity.ai.TargetPredicate;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.CreeperEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.projectile.ExplosiveProjectileEntity;
@@ -697,7 +698,8 @@ public static PlayerEntity delegate(World world, UUID uuid, String name) {
  *
  * @return {@code target}
  */
-public static <T extends Entity> T transfer(ProjectileEntity source, T target) {
+public static <T extends Entity> T transfer(ProjectileEntity source, T target, boolean spawn) {
+	copyNbt(source, target);
 	target.setPosition(source.getPos());
 	target.setVelocity(source.getVelocity());
 	target.noClip = source.noClip;
@@ -722,7 +724,8 @@ public static <T extends Entity> T transfer(ProjectileEntity source, T target) {
 			copy(sp, p);
 		}
 	}
-	source.world.spawnEntity(target);
+	if (spawn)
+		source.world.spawnEntity(target);
 	source.discard();
 	return target;
 }
@@ -752,7 +755,7 @@ public static <T> void temp(T preValue, Consumer<T> setter, T expected, Runnable
 }
 
 /**
- * 对着实体使用物品，如果失败就对着方块使用，如果失败就对着空气使用。
+ * 先试着对实体使用物品，如果失败就对着方块使用，如果再失败就对着空气使用。
  *
  * @param player    使用物品的玩家
  * @param hitResult 提供实体、使用物品的位置
@@ -956,7 +959,7 @@ public static <T extends PersistentProjectileEntity> T copy(T source) throws Nul
 	return copy(source, r);
 }
 
-public static < T extends PersistentProjectileEntity> T copy(PersistentProjectileEntity source, T target) {
+public static <T extends PersistentProjectileEntity> T copy(PersistentProjectileEntity source, T target) {
 	target.setPosition(source.getPos());
 	target.setVelocity(source.getVelocity());
 	target.setFireTicks(source.getFireTicks());
@@ -978,9 +981,20 @@ public static <T extends Entity> T copyNbt(Entity source, T target) {
 
 public static CreeperEntity setPowered(CreeperEntity creeper) {
 	var nbt = creeper.writeNbt(new NbtCompound());
-	nbt.putBoolean("powered",true);
+	nbt.putBoolean("powered", true);
 	creeper.readNbt(nbt);
 	return creeper;
+}
+
+public static Vec3d average(HitResult hitResult, Entity entity) {
+	return hitResult.getPos().add(entity.getPos()).multiply(0.5);
+}
+
+public static Entity summon(World world, Vec3d pos, NbtCompound nbt) {
+	return EntityType.loadEntityWithPassengers(nbt, world, (entity) -> {
+		entity.refreshPositionAndAngles(pos.x, pos.y, pos.z, entity.getYaw(), entity.getPitch());
+		return entity;
+	});
 }
 
 private MinecraftUtil() {

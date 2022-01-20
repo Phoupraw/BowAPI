@@ -37,10 +37,10 @@ private boolean onIfIsOf(ItemStack itemStack, Item item) {
  * 原版是把拉满弓的时长写死成1秒，这里改成调用{@link RenderedAsBow}自己的方法来计算拉满弓的时长。
  */
 @Redirect(method = "getSpeed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getItemUseTime()I"))
-private int onI(AbstractClientPlayerEntity player) {
+private int onGetItemUseTime(AbstractClientPlayerEntity player) {
 	if (!(getSpeed_itemStack.getItem() instanceof RenderedAsBow renderedAsBow))
 		return getItemUseTime();
-	return (int) (Math.sqrt(renderedAsBow.calcPullProgress(player,getSpeed_itemStack,  getItemUseTime())) * 20);
+	return (int) (Math.sqrt(renderedAsBow.calcPull(player,getSpeed_itemStack,  getItemUseTime())) * 20);
 }
 
 }

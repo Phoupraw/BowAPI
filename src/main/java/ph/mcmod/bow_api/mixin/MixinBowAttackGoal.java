@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import ph.mcmod.bow_api.CalcPullProgress;
+import ph.mcmod.bow_api.UsedAsBow;
 import ph.mcmod.bow_api.SimpleBowItem;
 
 @Mixin(BowAttackGoal.class)
@@ -28,27 +28,37 @@ private T actor;
  */
 @Overwrite
 public boolean isHoldingBow() {
-	return actor.isHolding(stack -> stack.getItem() instanceof BowItem);
+	return actor.isHolding(stack -> stack.getItem() instanceof UsedAsBow);
 }
 
-private ItemStack bowStack;
-private ItemStack arrowStack;
+private ItemStack tick_bowStack;
+private ItemStack tick_arrowStack;
 
-@SuppressWarnings("InvalidInjectorMethodSignature")
-@ModifyVariable(method = "tick", index = 6, at = @At(value = "STORE", ordinal = 0))
-private int onI(int i) {
-	bowStack = actor.getActiveItem();
-	if (!(bowStack.getItem() instanceof CalcPullProgress bowItem))
-		return i;
-	arrowStack = actor.getArrowType(bowStack);
-	return (int) (20 * bowItem.calcPullProgress(actor.world, actor, bowStack, arrowStack, actor.getItemUseTime()));
+//@SuppressWarnings("InvalidInjectorMethodSignature")
+//@ModifyVariable(method = "tick", index = 6, at = @At(value = "STORE", ordinal = 0))
+//private int onI(int i) {
+//	tick_bowStack = actor.getActiveItem();
+//	if (!(tick_bowStack.getItem() instanceof UsedAsBow bowItem))
+//		return i;
+//	tick_arrowStack = actor.getArrowType(tick_bowStack);
+//	return (int) (20 * bowItem.calcPullProgress(actor.world, actor, tick_bowStack, tick_arrowStack, actor.getItemUseTime()));
+//}
+
+@Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/mob/HostileEntity;getItemUseTime()I"))
+private int onGetItemUseTime(HostileEntity actor) {
+	tick_bowStack = actor.getActiveItem();
+	int usingTicks = actor.getItemUseTime();
+	if (!(tick_bowStack.getItem() instanceof UsedAsBow bowItem))
+		return usingTicks;
+	tick_arrowStack = actor.getArrowType(tick_bowStack);
+	return (int) (20 * bowItem.calcPullProgress(actor.world, actor, tick_bowStack, tick_arrowStack, usingTicks));
 }
 
 @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/BowItem;getPullProgress(I)F"))
 private float onGetPullProgress(int usingTicks) {
-	if (!(bowStack.getItem() instanceof CalcPullProgress bowItem))
+	if (!(tick_bowStack.getItem() instanceof UsedAsBow bowItem))
 		return BowItem.getPullProgress(usingTicks);
-	return (float) bowItem.calcPullProgress(actor.world, actor, bowStack, arrowStack, usingTicks);
+	return (float) bowItem.calcPullProgress(actor.world, actor, tick_bowStack, tick_arrowStack, usingTicks);
 }
 }
 

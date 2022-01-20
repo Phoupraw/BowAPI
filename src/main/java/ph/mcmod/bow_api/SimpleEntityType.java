@@ -14,7 +14,6 @@ import ph.mcmod.bow_api.mixin.AccessEntityType;
 import java.util.Objects;
 
 public class SimpleEntityType<T extends Entity> extends FabricEntityType<T> {
-@SuppressWarnings("unused")
 public static class Builder<T extends Entity> {
 	private final EntityFactory<T> factory;
 	private SpawnGroup spawnGroup = SpawnGroup.MISC;

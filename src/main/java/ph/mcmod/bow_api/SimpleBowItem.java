@@ -1,6 +1,5 @@
 package ph.mcmod.bow_api;
 
-import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
@@ -10,10 +9,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.SpectralArrowEntity;
-import net.minecraft.item.ArrowItem;
-import net.minecraft.item.BowItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.*;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -22,19 +19,18 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
-import ph.mcmod.bow_api.mixin.AccessPersistentProjectileEntity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
-
-@SuppressWarnings("unused")
-public class SimpleBowItem extends BowItem implements RenderedAsBow, CalcPullProgress {
+public class SimpleBowItem extends BowItem implements RenderedAsBow, UsedAsBow {
 protected final double damageAddend;
 protected final double damageFactor;
 protected final double pullSpeed;
 protected final double velocityAddend;
 protected final double velocityFactor;
-protected final boolean arrowDiscard;
 protected final List<ItemStack> neededItems;
 
 public SimpleBowItem(@NotNull BowSettings settings) {
@@ -44,8 +40,7 @@ public SimpleBowItem(@NotNull BowSettings settings) {
 	pullSpeed = settings.getPullSpeed();
 	velocityAddend = settings.getVelocityAddend();
 	velocityFactor = settings.getVelocityFactor();
-	arrowDiscard = settings.isArrowDiscard();
-	neededItems= settings.getNeededItems();
+	neededItems = settings.getNeededItems();
 }
 
 @Override
@@ -65,12 +60,12 @@ public void onStoppedUsing(@NotNull ItemStack bowStack, @NotNull World world, @N
 	projectileEntity.setVelocity(user, user.getPitch(), user.getYaw(), 0.0F, (float) (pullProgress * 3), 1);
 	projectileEntity.setDamage(projectileEntity.getDamage() + getDamageAddend());
 	projectileEntity.setVelocity(projectileEntity.getVelocity().add(projectileEntity.getVelocity().normalize().multiply(pullProgress * getVelocityAddend())));
-	((ProgressPulled)projectileEntity).setPullProgress(pullProgress);
+	((HPullProgress) projectileEntity).setPullProgress(pullProgress);
 	if (pullProgress >= 1)
 		projectileEntity.setCritical(true);
-	int power = getPower(world,user,bowStack,arrowStack,pullProgress,projectileEntity);
+	int power = getPower(world, user, bowStack, arrowStack, pullProgress, projectileEntity);
 	if (power > 0)
-		projectileEntity.setDamage(calcDamage(world,user,bowStack,arrowStack,pullProgress,projectileEntity,power));
+		projectileEntity.setDamage(calcDamage(world, user, bowStack, arrowStack, pullProgress, projectileEntity, power));
 	int punch = EnchantmentHelper.getLevel(Enchantments.PUNCH, bowStack);
 	if (punch > 0)
 		projectileEntity.setPunch(punch);
@@ -82,18 +77,22 @@ public void onStoppedUsing(@NotNull ItemStack bowStack, @NotNull World world, @N
 		player.incrementStat(Stats.USED.getOrCreateStat(this));
 		if (calcInfinity(world, player, bowStack, arrowStack, pullProgress) > world.random.nextDouble())
 			projectileEntity.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
-		else
-			arrowStack.decrement(1);
+		else {
+			if (getNeededItems().isEmpty())
+				arrowStack.decrement(1);
+			else {
+				getNeededItems().forEach(stack -> player.getInventory().remove(stack1 -> match(stack, stack1), stack.getCount(), player.getInventory()));
+			}
+		}
 	} else {
 		projectileEntity.pickupType = PersistentProjectileEntity.PickupPermission.DISALLOWED;
 	}
 	projectileEntity.setDamage(projectileEntity.getDamage() * getDamageFactor());
 	projectileEntity.setVelocity(projectileEntity.getVelocity().multiply(getVelocityFactor()));
-	if (isArrowDiscard())
-		((AccessPersistentProjectileEntity) projectileEntity).setLife(1200);
+//	if (isArrowDiscard())
+//		((AccessPersistentProjectileEntity) projectileEntity).setLife(1200);
 	world.spawnEntity(finallyModify(world, user, bowStack, arrowStack, pullProgress, projectileEntity));
 	playSoundOnShoot(world, user, bowStack, arrowStack, projectileEntity, pullProgress);
-//	System.out.println(projectileEntity.getVelocity().length());
 }
 
 /**
@@ -131,12 +130,12 @@ public double getVelocityFactor() {
 	return velocityFactor;
 }
 
-/**
- * @see BowSettings#setArrowDiscard(boolean)
- */
-public boolean isArrowDiscard() {
-	return arrowDiscard;
-}
+///**
+// * @see BowSettings#setArrowDiscard(boolean)
+// */
+//public boolean isArrowDiscard() {
+//	return arrowDiscard;
+//}
 
 public List<ItemStack> getNeededItems() {
 	return neededItems;
@@ -160,8 +159,8 @@ public double calcPullProgress(World world, LivingEntity user, ItemStack bowStac
  * 乘以了{@link #getPullSpeed()}
  */
 @Override
-public double calcPullProgress(AbstractClientPlayerEntity player, @NotNull ItemStack bow, int usingTicks) {
-	return RenderedAsBow.super.calcPullProgress(player, bow, (int) (usingTicks * getPullSpeed()));
+public double calcPull(Entity entity, @NotNull ItemStack bowStack, int usingTicks) {
+	return RenderedAsBow.super.calcPull(entity, bowStack, (int) (usingTicks * getPullSpeed()));
 }
 
 /**
@@ -251,22 +250,67 @@ public void playSoundOnShoot(World world, LivingEntity user, ItemStack bowStack,
 public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
 	super.usageTick(world, user, stack, remainingUseTicks);
 }
+
 public int getPower(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, PersistentProjectileEntity projectileEntity) {
 	return EnchantmentHelper.getLevel(Enchantments.POWER, bowStack);
 }
-public double calcDamage(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, PersistentProjectileEntity projectileEntity,int power) {
+
+public double calcDamage(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, PersistentProjectileEntity projectileEntity, int power) {
 	return projectileEntity.getDamage() + power * 0.5 + 0.5;
 }
 
 @Override
 public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
 	ItemStack handStack = player.getStackInHand(hand);
-	boolean arrowEmpty = getNeededItems().isEmpty()? player.getArrowType(handStack).isEmpty(): getNeededItems().stream().allMatch(player.getInventory()::contains);
-	if (!player.isCreative() && arrowEmpty) {
-		return TypedActionResult.fail(handStack);
-	} else {
+	boolean b = player.isCreative();
+	if (!b) {
+		var inventoryItems = toList(player.getInventory());
+		b = getNeededItems().isEmpty() ? player.getArrowType(handStack).isEmpty() : !getNeededItems().stream().allMatch(stack -> count(inventoryItems, stack) >= stack.getCount());
+	}
+	if (b) {
 		player.setCurrentHand(hand);
 		return TypedActionResult.consume(handStack);
+	} else {
+		return TypedActionResult.fail(handStack);
 	}
+}
+
+public static List<ItemStack> toList(Inventory inventory) {
+	List<ItemStack> list = new ArrayList<>();
+	for (int i = 0; i < inventory.size(); i++)
+		list.add(inventory.getStack(i));
+	return list;
+}
+
+public static Iterable<ItemStack> toIterable(Inventory inventory) {
+	return () -> new Iterator<>() {
+		int index = 0;
+
+		@Override
+		public boolean hasNext() {
+			return index < inventory.size();
+		}
+
+		@Override
+		public ItemStack next() {
+			return inventory.getStack(index++);
+		}
+	};
+}
+
+public static int count(Collection<ItemStack> itemStacks, ItemStack targetStack) {
+	return itemStacks.stream().mapMultiToInt((stack, consumer) -> {
+		if (match(targetStack, stack))
+			consumer.accept(stack.getCount());
+	}).sum();
+}
+
+public static boolean match(ItemStack template, ItemStack stack) {
+	return template.hasNbt() ? ItemStack.canCombine(stack, template) : ItemStack.areItemsEqual(stack, template);
+}
+
+public static ItemStack setCount(ItemStack itemStack, int count) {
+	itemStack.setCount(count);
+	return itemStack;
 }
 }

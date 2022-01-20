@@ -9,10 +9,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ph.mcmod.bow_api.ProgressPulled;
+import ph.mcmod.bow_api.BAfterDamage;
+import ph.mcmod.bow_api.HPullProgress;
 
 @Mixin(PersistentProjectileEntity.class)
-public abstract class MixinPersistentProjectileEntity implements ProgressPulled {
+public abstract class MixinPersistentProjectileEntity implements HPullProgress {
 private final PersistentProjectileEntity _this = (PersistentProjectileEntity) (Object) this;
 private double pullProgress;
 
@@ -43,9 +44,8 @@ private float onEntityHit_damage;
  *
  */
 @Inject(method = "onEntityHit", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/projectile/PersistentProjectileEntity;playSound(Lnet/minecraft/sound/SoundEvent;FF)V", shift = At.Shift.AFTER))
-private void endIf(EntityHitResult entityHitResult, CallbackInfo ci/*, Entity target, float velocity, int damage, Entity owner, DamageSource damageSource, boolean isEnderMan, int fireTicks*/) {
-
-	if (_this instanceof ph.mcmod.bow_api.AfterDamage a) {
+private void endDamageIf(EntityHitResult entityHitResult, CallbackInfo ci/*, Entity target, float velocity, int damage, Entity owner, DamageSource damageSource, boolean isEnderMan, int fireTicks*/) {
+	if (_this instanceof BAfterDamage a) {
 		a.afterDamage(entityHitResult,onEntityHit_damage,onEntityHit_damageSource);
 	}
 }

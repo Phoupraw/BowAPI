@@ -3,7 +3,6 @@ package ph.mcmod.bow_api;
 import net.fabricmc.fabric.api.item.v1.CustomDamageHandler;
 import net.fabricmc.fabric.api.item.v1.EquipmentSlotProvider;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.item.FoodComponent;
@@ -14,7 +13,6 @@ import net.minecraft.util.Rarity;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,19 +22,15 @@ import java.util.List;
  *
  * @see SimpleBowItem#SimpleBowItem(BowSettings)
  */
-@SuppressWarnings("unused")
 public class BowSettings extends FabricItemSettings {
-
-public interface FinallyModify extends Serializable {
-	Entity finallyModify(World world, LivingEntity user, ItemStack bowStack, ItemStack arrowStack, double pullProgress, Entity projectile);
-}
 
 private double damageAddend = 0;
 private double damageFactor = 1;
 private double pullSpeed = 1;
 private double velocityAddend = 0;
 private double velocityFactor = 1;
-private boolean arrowDiscard = false;
+private boolean defaultDamage = true;
+private ItemGroup itemGroup;
 protected final List<ItemStack> neededItems = new ArrayList<>();
 
 /**
@@ -92,26 +86,12 @@ public @NotNull BowSettings setVelocityFactor(double velocityFactor) {
 }
 
 /**
- * 让箭在落地后立马消失
+ * 添加射出箭时需要从玩家身上扣除的物品。原版就是箭。
  */
-
-public @NotNull BowSettings setArrowDiscard(boolean arrowDiscard) {
-	this.arrowDiscard = arrowDiscard;
-	return this;
-}
 public BowSettings addNeededItems(ItemStack... itemStacks) {
 	neededItems.addAll(Arrays.asList(itemStacks));
 	return this;
 }
-//public @NotNull BowSettings setSpawnOnHit(@NotNull EntityType<?> entityType) {
-//	this.spawnOnHit = Objects.requireNonNull(entityType)::create;
-//	return this;
-//}
-//
-//public @NotNull BowSettings setSpawnOnHit(@NotNull Function<World, Entity> function) {
-//	this.spawnOnHit = Objects.requireNonNull(function);
-//	return this;
-//}
 
 public double getDamageAddend() {
 	return damageAddend;
@@ -131,10 +111,6 @@ public double getVelocityAddend() {
 
 public double getVelocityFactor() {
 	return velocityFactor;
-}
-
-public boolean isArrowDiscard() {
-	return arrowDiscard;
 }
 
 public List<ItemStack> getNeededItems() {
@@ -162,6 +138,8 @@ public BowSettings food(FoodComponent foodComponent) {
 @Override
 public BowSettings maxCount(int maxCount) {
 	super.maxCount(maxCount);
+	if (maxCount > 1)
+		defaultDamage = false;
 	return this;
 }
 
@@ -174,6 +152,7 @@ public BowSettings maxDamageIfAbsent(int maxDamage) {
 @Override
 public BowSettings maxDamage(int maxDamage) {
 	super.maxDamage(maxDamage);
+	defaultDamage = false;
 	return this;
 }
 
@@ -186,6 +165,7 @@ public BowSettings recipeRemainder(Item recipeRemainder) {
 @Override
 public BowSettings group(ItemGroup group) {
 	super.group(group);
+	itemGroup=group;
 	return this;
 }
 
@@ -199,5 +179,13 @@ public BowSettings rarity(Rarity rarity) {
 public BowSettings fireproof() {
 	super.fireproof();
 	return this;
+}
+
+public boolean isDefaultDamage() {
+	return defaultDamage;
+}
+
+public ItemGroup getItemGroup() {
+	return itemGroup;
 }
 }

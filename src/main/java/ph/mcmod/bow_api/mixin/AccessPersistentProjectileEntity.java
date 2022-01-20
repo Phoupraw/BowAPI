@@ -7,10 +7,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(PersistentProjectileEntity.class)
 public interface AccessPersistentProjectileEntity {
 @Accessor
-@SuppressWarnings("unused")
 int getLife();
 
 @Accessor
 void setLife(int value);
-
 }
