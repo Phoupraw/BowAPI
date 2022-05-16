@@ -9,12 +9,12 @@
 		"MixinAbstractSkeletonEntity",
 		"MixinBowAttackGoal",
 		"MixinBowItem",
+		"MixinHorseBaseEntity",
 		"MixinLivingEntity",
 		"MixinPersistentProjectileEntity",
 		"MixinProjectileUtil"
 	],
 	"client": [
-		"AccessModelPredicateProviderRegistry",
 		"MixinAbstractClientPlayerEntity",
 		"MixinHeldItemRenderer",
 		"MixinModelPredicateProviderRegistry",

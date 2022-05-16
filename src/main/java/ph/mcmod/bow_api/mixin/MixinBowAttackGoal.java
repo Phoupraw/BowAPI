@@ -20,7 +20,7 @@ import ph.mcmod.bow_api.SimpleBowItem;
 public abstract class MixinBowAttackGoal<T extends HostileEntity & RangedAttackMob> extends Goal {
 @Shadow
 @Final
-private T actor;
+private HostileEntity actor;
 
 /**
  * @author Phoupraw

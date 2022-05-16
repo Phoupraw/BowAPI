@@ -2,29 +2,33 @@ package ph.mcmod.bow_api;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.item.ModelPredicateProviderRegistry;
-import net.minecraft.client.item.UnclampedModelPredicateProvider;
+import net.fabricmc.fabric.api.object.builder.v1.client.model.FabricModelPredicateProviderRegistry;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
-import ph.mcmod.bow_api.mixin.AccessModelPredicateProviderRegistry;
+import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public final class ClientMain {
-@SuppressWarnings("InstantiationOfUtilityClass")
-public static final AccessModelPredicateProviderRegistry MODEL_PREDICATE_PROVIDER_REGISTRY = (AccessModelPredicateProviderRegistry) new ModelPredicateProviderRegistry();
-public static final UnclampedModelPredicateProvider PULLING = (stack, world, entity, seed) -> entity != null && entity.isUsingItem() && entity.getActiveItem() == stack ? 1 : 0;
-public static final UnclampedModelPredicateProvider PULL = (stack, world, entity, seed) -> {
-	if (entity == null)
-		return 0;
-	if (entity.getActiveItem() != stack)
-		return 0;
-	int usingTicks = stack.getMaxUseTime() - entity.getItemUseTimeLeft();
-	return stack.getItem() instanceof RenderedAsBow customBow ? (float) customBow.calcPull(entity instanceof AbstractClientPlayerEntity player ? player : null, stack, usingTicks) : 0;
-};
 
 public static void init() {
-	MODEL_PREDICATE_PROVIDER_REGISTRY.invokeRegister(Items.BOW, new Identifier("pulling"), PULLING);
-	MODEL_PREDICATE_PROVIDER_REGISTRY.invokeRegister(Items.BOW, new Identifier("pull"), PULL);
+	FabricModelPredicateProviderRegistry.register(Items.BOW, new Identifier("pulling"), ClientMain::calcPulling);
+	FabricModelPredicateProviderRegistry.register(Items.BOW, new Identifier("pull"), ClientMain::calcPull);
+}
+
+public static float calcPulling(ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity living, int seed) {
+	return living != null && living.isUsingItem() && living.getActiveItem() == stack ? 1 : 0;
+}
+
+public static float calcPull(ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity living, int seed) {
+	if (living == null)
+		return 0;
+	if (living.getActiveItem() != stack)
+		return 0;
+	int usingTicks = stack.getMaxUseTime() - living.getItemUseTimeLeft();
+	return stack.getItem() instanceof RenderedAsBow customBow ? (float) customBow.calcPull(living instanceof AbstractClientPlayerEntity player ? player : null, stack, usingTicks) : 0;
 }
 }
