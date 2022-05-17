@@ -4,19 +4,33 @@
 
 因此，我编写了这个库。
 
-## 主功能接口
+## API
+### 主功能接口
 
 RenderedAsBow
 
 UsedAsBow
 
-## 主功能类
+### 主功能类
 
 SimpleBowItem
 
-## 工具类
+### 工具类
 
 EArrowEntityRenderer
 
 SimpleEntityType
 
+## Gradle
+```groovy
+repositories {
+	maven {
+		url = "https://github.com/Phoupraw/BowAPI/raw/1.18/publish"
+	}
+}
+```
+```groovy
+dependencies {
+	modImplementation "ph.mcmod:BowAPI:+"
+}
+```
